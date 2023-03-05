@@ -8,6 +8,7 @@ $client_id = "cal-exp-01";
 $client_secret = "5ituv35t8o7gznv38957gzn489g5z489g5z4789g5zn7demo";
 $app_id = "95649564";
 $app_token = "95z8gnwv9w45z9gw54z9gzf349gzn9w45demo";
+$friendly_name = "FriendlyName of the Calendar displayed in App";
 
 // set names of fields in Podio to export to calendar items
 

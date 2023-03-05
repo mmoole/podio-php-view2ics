@@ -4,7 +4,7 @@ header('Content-Disposition: inline; filename=calendar.ics');
 
 //  read view id from parameter this script is called
 $vid_url = $_SERVER['QUERY_STRING'];
-$vid = (int)filter_var($vid_url, FILTER_SANITIZE_NUMBER_INT);
+$vid = (int) filter_var($vid_url, FILTER_SANITIZE_NUMBER_INT);
 if (!isset($vid)) {
   print "could not retrieve required parameter\r\n";
   exit();
@@ -30,22 +30,6 @@ function bline(string $longtext): string
   return ("$retline" . "\r\n");
 }
 
-// TODO: bekannte Probleme:
-// - Wiederholungen werden nicht eingeschlossen - es wird jeweils nur der erste Termin ausgegeben
-
-
-// print head of calendar file
-print "BEGIN:VCALENDAR\r\n";
-print "VERSION:2.0\r\n";
-print "PRODID:-//Podio API//EN//view-exporter//" . $vid . "\r\n";
-print "METHOD:REQUEST\r\n";
-print "X-WR-CALNAME:view" . $vid . "\r\n";
-print "X-WR-TIMEZONE:Europe/Berlin\r\n";
-print "CALSCALE:GREGORIAN\r\n";
-print "X-COMMENT-USAGE:This calendar does not contain recurring events!\r\n";
-print "X-COMMENT-GENERATOR:PHP Version " . phpversion() . " \r\n";
-
-
 //  include file for reading specific configuration
 //  infer filename from this scripts filename and given value for view id
 $s_url = $_SERVER["SCRIPT_NAME"];
@@ -57,12 +41,10 @@ $i_file = $s_ifile[0] . "_" . $vid . ".inc";
 
 if (file_exists($i_file)) {
   require($i_file);
-}
-else {
+} else {
   print "calendar not found\r\n";
   exit();
 }
-
 
 // load Podio API
 require __DIR__ . '/vendor/autoload.php';
@@ -72,14 +54,29 @@ Podio::setup($client_id, $client_secret);
 
 try {
   Podio::authenticate_with_app($app_id, $app_token);
-// Authentication was a success, now you can start making API calls.
-}
-catch (PodioError $e) {
+  // Authentication was a success, now you can start making API calls.
+} catch (PodioError $e) {
   // Something went wrong. Examine $e->body['error_description'] for a description of the error.
   print "could not connect to Podio, exiting </br>";
   print $e;
   exit();
 }
+
+
+// TODO: bekannte Probleme:
+// - Wiederholungen werden nicht eingeschlossen - es wird jeweils nur der erste Termin ausgegeben
+
+// print head of calendar file
+print "BEGIN:VCALENDAR\r\n";
+print "VERSION:2.0\r\n";
+print "PRODID:-//Podio API//EN//view-exporter//" . $vid . "\r\n";
+print "METHOD:REQUEST\r\n";
+print "X-WR-CALNAME:" . $friendly_name . "\r\n";
+print "X-WR-TIMEZONE:Europe/Berlin\r\n";
+print "CALSCALE:GREGORIAN\r\n";
+print "X-COMMENT-USAGE:This calendar does not support recurring events!\r\n";
+print "X-COMMENT-GENERATOR:PHP Version " . phpversion() . " \r\n";
+
 
 $view_id = $vid;
 $item_collection = PodioItem::filter_by_view($app_id, $view_id, $attributes = array());
@@ -91,8 +88,8 @@ $item_collection = PodioItem::filter_by_view($app_id, $view_id, $attributes = ar
 
 
 //  loop over item_collection array for calendar items
-foreach ($item_collection as $theitem)
-{ //foreach element in $item_collection
+foreach ($item_collection as $theitem) {
+  //foreach element in $item_collection
   //  debug print whole item
   // print_r ($theitem);
 
@@ -110,9 +107,8 @@ foreach ($item_collection as $theitem)
 
   // get title from field previously set per variable
   if ($usepodiotitle == 'true') {
-    $vtitle = ($theitem->{ "title"});
-  }
-  else {
+    $vtitle = ($theitem->{"title"});
+  } else {
     $vtitle = (PodioItem::get_field_value($theitem->item_id, $field_summary))[0]["value"];
   }
   print bline("SUMMARY:" . $vtitle . "\r\n");
@@ -130,8 +126,7 @@ foreach ($item_collection as $theitem)
   if ($field_description_only_html == 'true') {
     // DEscription field contains only html contents no plain text
     print bline("DESCRIPTION:" . $v_description_html . "\r\n");
-  }
-  else {
+  } else {
     // HTML formatted Description field in general being followed by plaintext Description:
     //  via https://stackoverflow.com/a/67844673
     // DESCRIPTION;ALTREP="data:text/html;<h1>Some text</h1>":Some text
@@ -154,15 +149,13 @@ foreach ($item_collection as $theitem)
   if ($field_ownlink_disabled == 'false') {
     // URL of the event in Podio
     if ($usepodiourl == 'true') {
-      $vownlink = $theitem->{ "link"};
+      $vownlink = $theitem->{"link"};
       print bline("URL:" . $vownlink . "\r\n");
-    }
-    else {
+    } else {
       // get link per field id
       if ((PodioItem::get_field_value($theitem->item_id, $field_ownlink))) {
         $vownlink = (PodioItem::get_field_value($theitem->item_id, $field_ownlink))[0]['embed']['resolved_url'] . " "; // wieso auch immer scheint es hier nützlich, ein Leerzeichen anzuhängen
-      }
-      else {
+      } else {
         $vownlink = "";
       }
       if ($vownlink != "") {
@@ -181,8 +174,8 @@ foreach ($item_collection as $theitem)
   }
 
 
-  $start_datetime = array_values(((($theitem->{ "fields"})[2])->{ "values"}))[0]; //    zusatzfeld time start
-  $end_datetime = array_values(((($theitem->{ "fields"})[2])->{ "values"}))[1]; //    zusatzfeld time ende
+  $start_datetime = array_values(((($theitem->{"fields"})[2])->{"values"}))[0]; //    zusatzfeld time start
+  $end_datetime = array_values(((($theitem->{"fields"})[2])->{"values"}))[1]; //    zusatzfeld time ende
   print "DTSTART:" . $start_datetime->format('Ymd') . "T" . $start_datetime->format('His') . "Z\r\n";
   print "DTEND:" . $end_datetime->format('Ymd') . "T" . $end_datetime->format('His') . "Z\r\n";
 
