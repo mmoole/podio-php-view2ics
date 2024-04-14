@@ -27,6 +27,9 @@ $field_description_only_html = 'false';
 // field id for calendar item location aka LOCATION:
 $field_location = "223453453";
 
+// field name for calendar item date and time:
+$field_datetime_name = "time";
+
 // set to true if the URL should point to the item itself in podio
 $usepodiourl = 'true';
 // otherwhise set field id used for URL field in event

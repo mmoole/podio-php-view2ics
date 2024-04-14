@@ -1,5 +1,6 @@
 <?php
 header('Content-type: text/calendar; charset=utf-8');
+// header('Content-type: text/plain; charset=utf-8');
 header('Content-Disposition: inline; filename=calendar.ics');
 
 //  read view id from parameter this script is called
@@ -91,7 +92,16 @@ $item_collection = PodioItem::filter_by_view($app_id, $view_id, $attributes = ar
 foreach ($item_collection as $theitem) {
   //foreach element in $item_collection
   //  debug print whole item
-  // print_r ($theitem);
+  // print_r ("begin_theitem\r\n");
+  // print_r ($theitem . "\r\n");
+  // print_r ("end_theitem\r\n");
+
+  // debug Iterate over the field collection
+  // foreach ($theitem->fields as $field) {
+  //   // You can now work on each individual field object:
+  //   print "This field has the id: " . $field->field_id . "\r\n";
+  //   print "This field has the external_id: " . $field->external_id . "\r\n" . "\r\n";
+  // }
 
   // head of event
   print "BEGIN:VEVENT\r\n";
@@ -107,14 +117,14 @@ foreach ($item_collection as $theitem) {
 
   // get title from field previously set per variable
   if ($usepodiotitle == 'true') {
-    $vtitle = ($theitem->{"title"});
+    $vtitle = ($theitem->{"title"} ?? 'untitled event');
   } else {
-    $vtitle = (PodioItem::get_field_value($theitem->item_id, $field_summary))[0]["value"];
+    $vtitle = (PodioItem::get_field_value($theitem->item_id, $field_summary))[0]["value"] ?? 'untitled event';
   }
   print bline("SUMMARY:" . $vtitle . "\r\n");
 
   // field for description of the event
-  $v_description_html = (PodioItem::get_field_value($theitem->item_id, $field_description))[0]["value"];
+  $v_description_html = (PodioItem::get_field_value($theitem->item_id, $field_description))[0]["value"] ?? 'description unset';
   $v_description_htmencoded = rawurlencode("<body>" . ($v_description_html) . "</body>");
   $v_description = $v_description_html;
 
@@ -173,9 +183,19 @@ foreach ($item_collection as $theitem) {
 
   }
 
+  // FIXME: null values of datetime is not handled!
+  // via podio api exaples
+  // using variable $field_datetime_name in order to get datetime of event
+  // $theitem->fields[$field_datetime_name]->start; // E.g. DateTime or null
+  // $theitem->fields[$field_datetime_name]->start_date; // E.g. DateTime or null
+  // $theitem->fields[$field_datetime_name]->start_time; // E.g. DateTime or null
+  $start_datetime = $theitem->fields[$field_datetime_name]->start_time; // E.g. DateTime or null //    zusatzfeld time start
+  // $theitem->fields[$field_datetime_name]->end; // E.g. DateTime or null
+  // $theitem->fields[$field_datetime_name]->end_date; // E.g. DateTime or null
+  // $theitem->fields[$field_datetime_name]->end_time; // E.g. DateTime or null
+  $end_datetime = $theitem->fields[$field_datetime_name]->end_time; // E.g. DateTime or null //    zusatzfeld time ende
+  // $theitem->fields[$field_datetime_name]->humanized_value(); // E.g. "2014-02-14 14:00-15:00"
 
-  $start_datetime = array_values(((($theitem->{"fields"})[2])->{"values"}))[0]; //    zusatzfeld time start
-  $end_datetime = array_values(((($theitem->{"fields"})[2])->{"values"}))[1]; //    zusatzfeld time ende
   print "DTSTART:" . $start_datetime->format('Ymd') . "T" . $start_datetime->format('His') . "Z\r\n";
   print "DTEND:" . $end_datetime->format('Ymd') . "T" . $end_datetime->format('His') . "Z\r\n";
 
